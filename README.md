@@ -2,10 +2,8 @@
 
 ![Python](https://img.shields.io/badge/python-3.8%2B-blue)
 ![Flask](https://img.shields.io/badge/flask-%3E=2.0-green)
-![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 
-MatrixCalculator is an interactive web application built with Flask for performing various matrix operations and numerical computations.  
-Perfect for students, lecturers, and practitioners who need fast and easy numerical calculations.
+**MatrixCalculator** is an interactive web application built with Flask for performing various matrix operations and numerical computations.  
 
 ---
 
