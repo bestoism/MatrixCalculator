@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Kalkulator Matriks{% endblock %}</title>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
+    <link rel="shortcut icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="{{ url_for('home') }}" class="logo">
+                <i class="fas fa-calculator"></i>
+            </a>
+            <div class="title-container">
+                <h1>{% block header %}Kalkulator Matriks{% endblock %}</h1>
+            </div>
+        </div>
+        
+        {% block content %}{% endblock %}
+    </div>
+
+    {% block extra_js %}{% endblock %}
+
+    <script>
+    // Efek mouse move yang lebih halus
+    let mouseTimeout;
+    document.addEventListener('mousemove', (e) => {
+        if (mouseTimeout) {
+            window.cancelAnimationFrame(mouseTimeout);
+        }
+        
+        mouseTimeout = window.requestAnimationFrame(() => {
+            const x = e.clientX / window.innerWidth * 100;
+            const y = e.clientY / window.innerHeight * 100;
+            document.body.style.setProperty('--x', `${x}%`);
+            document.body.style.setProperty('--y', `${y}%`);
+        });
+    });
+
+    let clickTimeout;
+    document.addEventListener('click', (e) => {
+        if (e.target === document.body || e.target === document.documentElement) {
+            if (clickTimeout) {
+                window.cancelAnimationFrame(clickTimeout);
+            }
+            
+            clickTimeout = window.requestAnimationFrame(() => {
+                const drop = document.createElement('div');
+                drop.className = 'water-drop';
+                drop.style.left = `${e.clientX}px`;
+                drop.style.top = `${e.clientY}px`;
+                document.body.appendChild(drop);
+                
+                setTimeout(() => {
+                    drop.remove();
+                }, 1500);
+            });
+        }
+    });
+
+    document.querySelectorAll('.menu-item').forEach(item => {
+        let hoverTimeout;
+        
+        item.addEventListener('mousemove', (e) => {
+            if (hoverTimeout) {
+                window.cancelAnimationFrame(hoverTimeout);
+            }
+            
+            hoverTimeout = window.requestAnimationFrame(() => {
+                const rect = item.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                
+                const moveX = (x - centerX) / 30;  
+                const moveY = (y - centerY) / 30;
+                
+                item.style.transform = `translateX(${moveX}px) translateY(${moveY}px)`;
+            });
+        });
+        
+        item.addEventListener('mouseleave', () => {
+            item.style.transform = 'translateX(0) translateY(0)';
+        });
+    });
+    </script>
+</body>
+</html> 

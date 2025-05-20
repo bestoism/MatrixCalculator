@@ -1,0 +1,411 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: linear-gradient(135deg, #f5f7fa 0%, #e4e8eb 100%);
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+    cursor: default;
+}
+
+/* Tambahkan efek gradient yang bergerak */
+body:before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(
+        circle at var(--x, 50%) var(--y, 50%),
+        rgba(52, 152, 219, 0.03) 0%,
+        rgba(41, 128, 185, 0.02) 20%,
+        rgba(0, 0, 0, 0) 40%
+    );
+    pointer-events: none;
+    transition: all 0.5s ease;
+    z-index: 0;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 40px 20px;
+    position: relative;
+    z-index: 2;
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 40px;
+    color: #2c3e50;
+    font-size: 2.5em;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+    position: relative;
+    padding-bottom: 15px;
+}
+
+h1:after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 3px;
+    background: linear-gradient(90deg, #3498db, #2980b9);
+}
+
+.menu {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding: 20px;
+}
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    padding: 20px 30px;
+    background: white;
+    border-radius: 12px;
+    text-decoration: none;
+    color: #2c3e50;
+    font-size: 1.1em;
+    font-weight: 500;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    border-left: 5px solid #3498db;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Efek hover yang baru */
+.menu-item:before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 0;
+    height: 100%;
+    background: linear-gradient(90deg, rgba(52, 152, 219, 0.1), rgba(41, 128, 185, 0.1));
+    transition: width 0.3s ease;
+    z-index: 0;
+}
+
+.menu-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.08);
+    border-left: 5px solid #2980b9;
+}
+
+.menu-item:hover:before {
+    width: 100%;
+}
+
+.menu-item:hover i {
+    color: #2980b9;
+    transform: scale(1.1);
+}
+
+/* Efek warna berbeda untuk setiap menu */
+.menu-item:nth-child(1) {
+    border-left-color: #3498db;  /* Biru */
+}
+
+.menu-item:nth-child(2) {
+    border-left-color: #2ecc71;  /* Hijau */
+}
+
+.menu-item:nth-child(3) {
+    border-left-color: #e74c3c;  /* Merah */
+}
+
+.menu-item:nth-child(4) {
+    border-left-color: #f1c40f;  /* Kuning */
+}
+
+.menu-item:nth-child(5) {
+    border-left-color: #9b59b6;  /* Ungu */
+}
+
+.menu-item:nth-child(6) {
+    border-left-color: #e67e22;  /* Oranye */
+}
+
+.menu-item:nth-child(7) {
+    border-left-color: #1abc9c;  /* Turquoise */
+}
+
+.menu-item:nth-child(8) {
+    border-left-color: #34495e;  /* Navy */
+}
+
+.menu-item:nth-child(9) {
+    border-left-color: #d35400;  /* Oranye Tua */
+}
+
+.menu-item:nth-child(10) {
+    border-left-color: #16a085;  /* Hijau Tua */
+}
+
+/* Efek hover untuk setiap menu */
+.menu-item:nth-child(1):hover {
+    border-left-color: #2980b9;
+    background: linear-gradient(90deg, rgba(52, 152, 219, 0.05), white);
+}
+
+.menu-item:nth-child(2):hover {
+    border-left-color: #27ae60;
+    background: linear-gradient(90deg, rgba(46, 204, 113, 0.05), white);
+}
+
+.menu-item:nth-child(3):hover {
+    border-left-color: #c0392b;
+    background: linear-gradient(90deg, rgba(231, 76, 60, 0.05), white);
+}
+
+.menu-item:nth-child(4):hover {
+    border-left-color: #f39c12;
+    background: linear-gradient(90deg, rgba(241, 196, 15, 0.05), white);
+}
+
+.menu-item:nth-child(5):hover {
+    border-left-color: #8e44ad;
+    background: linear-gradient(90deg, rgba(155, 89, 182, 0.05), white);
+}
+
+.menu-item:nth-child(6):hover {
+    border-left-color: #d35400;
+    background: linear-gradient(90deg, rgba(230, 126, 34, 0.05), white);
+}
+
+.menu-item:nth-child(7):hover {
+    border-left-color: #16a085;
+    background: linear-gradient(90deg, rgba(26, 188, 156, 0.05), white);
+}
+
+.menu-item:nth-child(8):hover {
+    border-left-color: #2c3e50;
+    background: linear-gradient(90deg, rgba(52, 73, 94, 0.05), white);
+}
+
+.menu-item:nth-child(9):hover {
+    border-left-color: #c0392b;
+    background: linear-gradient(90deg, rgba(211, 84, 0, 0.05), white);
+}
+
+.menu-item:nth-child(10):hover {
+    border-left-color: #11806a;
+    background: linear-gradient(90deg, rgba(22, 160, 133, 0.05), white);
+}
+
+/* Efek hover untuk ikon */
+.menu-item:hover i {
+    transform: scale(1.1) rotate(5deg);
+    transition: all 0.3s ease;
+}
+
+/* Efek active saat diklik */
+.menu-item:active {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.menu-item i {
+    font-size: 1.2em;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 15px;
+    color: #3498db;
+    z-index: 1;
+}
+
+.menu-item span {
+    flex: 1;
+}
+
+/* Responsive design */
+@media (max-width: 600px) {
+    .menu-item {
+        padding: 15px 20px;
+        font-size: 1em;
+    }
+
+    .menu-item i {
+        font-size: 1.1em;
+        margin-right: 12px;
+    }
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+.logo {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+.logo i {
+    font-size: 40px;
+    color: white;
+}
+
+@media (max-width: 600px) {
+    .container {
+        padding: 20px 10px;
+    }
+    
+    h1 {
+        font-size: 2em;
+    }
+    
+    .logo {
+        width: 60px;
+        height: 60px;
+    }
+
+    .logo i {
+        font-size: 30px;
+    }
+} 
+
+.menu-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    margin-right: 15px;
+}
+
+.menu-icon svg {
+    width: 24px;
+    height: 24px;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    fill: none;
+}
+
+/* Animasi hover untuk logo */
+.menu-item:hover .menu-icon svg {
+    transform: scale(1.1);
+    transition: transform 0.3s ease;
+}
+
+/* Warna khusus untuk setiap logo */
+.menu-item:nth-child(1) .menu-icon svg {
+    color: #3498db;  /* Biru untuk LU Decomposition */
+}
+
+.menu-item:nth-child(6) .menu-icon svg {
+    color: #e74c3c;  /* Merah untuk Non Linear */
+} 
+
+.title-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.watermark {
+    color: #95a5a6;
+    font-size: 0.9em;
+    font-weight: 400;
+    margin-top: -30px;  /* Sesuaikan jarak dengan judul */
+    opacity: 0.8;
+}
+
+/* Update responsive design */
+@media (max-width: 600px) {
+    .watermark {
+        font-size: 0.8em;
+        margin-top: -20px;
+    }
+} 
+
+/* Efek Ripple */
+.menu-item {
+    position: relative;
+    overflow: hidden;
+}
+
+.ripple {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 50%;
+    width: 100px;
+    height: 100px;
+    margin-top: -50px;
+    margin-left: -50px;
+    animation: ripple 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+}
+
+@keyframes ripple {
+    0% {
+        transform: scale(0);
+        opacity: 0.4;
+    }
+    100% {
+        transform: scale(3);
+        opacity: 0;
+    }
+}
+
+/* Efek Water Drop */
+.water-drop {
+    position: fixed;
+    pointer-events: none;
+    z-index: 0;
+    width: 2px;
+    height: 2px;
+    background: rgba(52, 152, 219, 0.15);
+    border-radius: 50%;
+    animation: drop 1.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+}
+
+@keyframes drop {
+    0% {
+        transform: scale(0);
+        opacity: 0.3;
+    }
+    100% {
+        transform: scale(150);
+        opacity: 0;
+    }
+}
+
+/* Efek hover pada background */
+body:hover:after {
+    opacity: 0.7;
+}
+
+/* Pastikan z-index untuk konten utama */
+.container {
+    position: relative;
+    z-index: 2;
+} 

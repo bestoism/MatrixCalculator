@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+
+{% block title %}Eliminasi Gauss - Kalkulator Matriks{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/gauss_elimination.css') }}">
+{% endblock %}
+
+{% block header %}Eliminasi Gauss{% endblock %}
+
+{% block content %}
+<div class="calculator-container">
+    <div class="input-section">
+        <h2>Masukkan Sistem Persamaan Linear</h2>
+        <form id="gaussEliminationForm">
+            <div class="matrix-size-input">
+                <div class="size-group">
+                    <label for="numEquations">Jumlah Persamaan:</label>
+                    <input type="number" id="numEquations" min="2" max="10" value="3" class="size-input">
+                </div>
+                <div class="size-group">
+                    <label for="numVariables">Jumlah Variabel:</label>
+                    <input type="number" id="numVariables" min="2" max="10" value="3" class="size-input">
+                </div>
+                <button type="button" class="btn btn-secondary" onclick="generateMatrixInput()">
+                    <i class="fas fa-table"></i> Buat Matriks
+                </button>
+            </div>
+            
+            <div class="matrix-wrapper">
+                <div id="matrixInput" class="matrix-input">
+                </div>
+                <div class="variable-labels" id="variableLabels">
+                </div>
+                <div class="equals-column">=</div>
+                <div id="constantsInput" class="constants-input">
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary calculate-btn">
+                <i class="fas fa-calculator"></i> Hitung
+            </button>
+        </form>
+    </div>
+
+    <div class="result-section" id="resultSection">
+        <h2>Hasil Eliminasi Gauss</h2>
+        <div class="steps-container" id="stepsContainer">
+        </div>
+        <div class="final-result" id="finalResult">
+        </div>
+    </div>
+</div>
+
+<div class="action-buttons">
+    <a href="{{ url_for('home') }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Kembali ke Menu Utama
+    </a>
+    <button type="button" class="btn btn-danger" onclick="clearAll()">
+        <i class="fas fa-trash"></i> Bersihkan
+    </button>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function generateMatrixInput() {
+    const rows = parseInt(document.getElementById('numEquations').value);
+    const cols = parseInt(document.getElementById('numVariables').value);
+    
+    const matrixInput = document.getElementById('matrixInput');
+    matrixInput.innerHTML = '';
+    
+    for (let i = 0; i < rows; i++) {
+        const row = document.createElement('div');
+        row.className = 'matrix-row';
+        
+        for (let j = 0; j < cols; j++) {
+            const input = document.createElement('input');
+            input.type = 'number';
+            input.className = 'matrix-cell';
+            input.step = 'any';
+            input.required = true;
+            input.id = `cell_${i}_${j}`;
+            input.placeholder = '0';
+            row.appendChild(input);
+        }
+        
+        matrixInput.appendChild(row);
+    }
+    
+    const variableLabels = document.getElementById('variableLabels');
+    variableLabels.innerHTML = '';
+    
+    for (let j = 0; j < cols; j++) {
+        const label = document.createElement('div');
+        label.className = 'variable-label';
+        label.textContent = `x${j + 1}`;
+        variableLabels.appendChild(label);
+    }
+    
+    const constantsInput = document.getElementById('constantsInput');
+    constantsInput.innerHTML = '';
+    
+    for (let i = 0; i < rows; i++) {
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.className = 'constant-cell';
+        input.step = 'any';
+        input.required = true;
+        input.id = `constant_${i}`;
+        input.placeholder = '0';
+        constantsInput.appendChild(input);
+    }
+}
+
+function getSystemValues() {
+    const rows = parseInt(document.getElementById('numEquations').value);
+    const cols = parseInt(document.getElementById('numVariables').value);
+    const matrix = [];
+    const constants = [];
+    
+    for (let i = 0; i < rows; i++) {
+        const row = [];
+        for (let j = 0; j < cols; j++) {
+            const value = document.getElementById(`cell_${i}_${j}`).value;
+            row.push(value ? parseFloat(value) : 0);
+        }
+        matrix.push(row);
+        
+        const constant = document.getElementById(`constant_${i}`).value;
+        constants.push(constant ? parseFloat(constant) : 0);
+    }
+    
+    return { matrix, constants };
+}
+
+function displayStep(step, matrix, constants) {
+    const container = document.createElement('div');
+    container.className = 'elimination-step';
+    
+    const stepTitle = document.createElement('h3');
+    stepTitle.textContent = `Langkah ${step}:`;
+    container.appendChild(stepTitle);
+    
+    const augmentedMatrix = document.createElement('div');
+    augmentedMatrix.className = 'augmented-matrix';
+    
+    for (let i = 0; i < matrix.length; i++) {
+        const row = document.createElement('div');
+        row.className = 'matrix-row';
+        
+        for (let j = 0; j < matrix[i].length; j++) {
+            const cell = document.createElement('div');
+            cell.className = 'matrix-cell';
+            cell.textContent = matrix[i][j].toFixed(4);
+            row.appendChild(cell);
+        }
+        
+        const separator = document.createElement('div');
+        separator.className = 'matrix-separator';
+        separator.textContent = '|';
+        row.appendChild(separator);
+        
+        const constantCell = document.createElement('div');
+        constantCell.className = 'matrix-cell';
+        constantCell.textContent = constants[i].toFixed(4);
+        row.appendChild(constantCell);
+        
+        augmentedMatrix.appendChild(row);
+    }
+    
+    container.appendChild(augmentedMatrix);
+    document.getElementById('stepsContainer').appendChild(container);
+}
+
+function displaySolution(solution) {
+    const container = document.getElementById('finalResult');
+    container.innerHTML = '<h3>Solusi:</h3>';
+    
+    const solutionList = document.createElement('div');
+    solutionList.className = 'solution-list';
+    
+    solution.forEach((value, index) => {
+        const item = document.createElement('div');
+        item.className = 'solution-item';
+        item.innerHTML = `x<sub>${index + 1}</sub> = ${value.toFixed(4)}`;
+        solutionList.appendChild(item);
+    });
+    
+    container.appendChild(solutionList);
+}
+
+document.getElementById('gaussEliminationForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const { matrix, constants } = getSystemValues();
+
+    try {
+        const response = await fetch('/api/gauss-elimination', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ matrix, constants }),
+        });
+
+        const data = await response.json();
+        if (data.error) {
+            alert(data.error);
+            return;
+        }
+
+        document.getElementById('resultSection').classList.add('show');
+        document.getElementById('stepsContainer').innerHTML = '';
+        
+        data.steps.forEach((step, index) => {
+            displayStep(index + 1, step.matrix, step.constants);
+        });
+        
+        displaySolution(data.solution);
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Terjadi kesalahan dalam perhitungan');
+    }
+});
+
+function clearAll() {
+    document.getElementById('numEquations').value = '3';
+    document.getElementById('numVariables').value = '3';
+
+    generateMatrixInput();
+    
+    document.getElementById('resultSection').classList.remove('show');
+    document.getElementById('stepsContainer').innerHTML = '';
+    document.getElementById('finalResult').innerHTML = '';
+}
+
+document.addEventListener('DOMContentLoaded', generateMatrixInput);
+</script>
+{% endblock %}

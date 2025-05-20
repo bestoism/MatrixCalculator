@@ -1,0 +1,260 @@
+{% extends "base.html" %}
+
+{% block title %}Interpolasi - Kalkulator Matriks{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/interpolation.css') }}">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block header %}Interpolasi{% endblock %}
+
+{% block content %}
+<div class="calculator-container">
+    <div class="input-section">
+        <h2>Masukkan Data</h2>
+        <form id="interpolationForm">
+            <div class="operation-selection">
+                <label for="method">Metode Interpolasi:</label>
+                <select name="method" id="method">
+                    <option value="linear">Linear</option>
+                    <option value="polynomial">Kuadrat</option>
+                    <option value="lagrange">Newton</option>
+                </select>
+            </div>
+
+            <div class="points-input">
+                <div class="points-header">
+                    <h3>Data Points</h3>
+                    <div class="points-controls">
+                        <input type="number" id="numPoints" min="2" max="10" value="3" class="points-count">
+                        <button type="button" class="btn btn-secondary" onclick="generatePointsInput()">
+                            <i class="fas fa-table"></i> Generate Input
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="points-container" id="pointsContainer">
+                </div>
+            </div>
+
+            <div class="interpolate-input">
+                <h3>Nilai yang akan diinterpolasi</h3>
+                <div class="input-group">
+                    <label for="xInterpolate">x =</label>
+                    <input type="number" id="xInterpolate" step="any" required class="interpolate-value">
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary calculate-btn">
+                <i class="fas fa-calculator"></i> Hitung
+            </button>
+        </form>
+    </div>
+
+    <div class="result-section" id="resultSection">
+        <h2>Hasil Interpolasi</h2>
+        <div class="result-container">
+            <div class="result-box">
+                <div class="result-content">
+                    <h3>Hasil Perhitungan</h3>
+                    <div class="result-value" id="resultValue"></div>
+                </div>
+            </div>
+
+            <div class="plot-box">
+                <h3>Grafik Interpolasi</h3>
+                <div class="plot-container">
+                    <canvas id="interpolationPlot"></canvas>
+                </div>
+            </div>
+
+            <div class="points-box">
+                <h3>Data Points</h3>
+                <div class="table-container" id="pointsTable"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="action-buttons">
+    <a href="{{ url_for('home') }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Kembali ke Menu Utama
+    </a>
+    <button type="button" class="btn btn-danger" onclick="clearAll()">
+        <i class="fas fa-trash"></i> Bersihkan
+    </button>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let interpolationChart = null;
+
+function generatePointsInput() {
+    const numPoints = parseInt(document.getElementById('numPoints').value);
+    const container = document.getElementById('pointsContainer');
+    container.innerHTML = '';
+    
+    for (let i = 0; i < numPoints; i++) {
+        const pointDiv = document.createElement('div');
+        pointDiv.className = 'point-input';
+        pointDiv.innerHTML = `
+            <label>Point ${i + 1}:</label>
+            <div class="coordinate-inputs">
+                <input type="number" step="any" required placeholder="x" id="x${i}">
+                <input type="number" step="any" required placeholder="y" id="y${i}">
+            </div>
+        `;
+        container.appendChild(pointDiv);
+    }
+}
+
+function createPlot(data) {
+    if (interpolationChart) {
+        interpolationChart.destroy();
+    }
+    
+    const ctx = document.getElementById('interpolationPlot').getContext('2d');
+    interpolationChart = new Chart(ctx, {
+        type: 'scatter',
+        data: {
+            datasets: [{
+                label: 'Data Points',
+                data: data.x_points.map((x, i) => ({x: x, y: data.y_points[i]})),
+                backgroundColor: '#3498db',
+                pointRadius: 6
+            }, {
+                label: 'Interpolation',
+                data: data.x_plot.map((x, i) => ({x: x, y: data.y_plot[i]})),
+                type: 'line',
+                borderColor: '#2ecc71',
+                fill: false
+            }, {
+                label: 'Interpolated Point',
+                data: [{x: data.x_interpolate, y: data.y_interpolate}],
+                backgroundColor: '#e74c3c',
+                pointRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                    type: 'linear',
+                    position: 'bottom',
+                    title: {
+                        display: true,
+                        text: 'x'
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'y'
+                    }
+                }
+            }
+        }
+    });
+}
+
+function createPointsTable(data) {
+    const container = document.getElementById('pointsTable');
+    const tableHTML = `
+        <table>
+            <thead>
+                <tr>
+                    <th>Point</th>
+                    <th>x</th>
+                    <th>y</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${data.x_points.map((x, i) => `
+                    <tr>
+                        <td>${i + 1}</td>
+                        <td>${x}</td>
+                        <td>${data.y_points[i]}</td>
+                    </tr>
+                `).join('')}
+                <tr class="interpolated-row">
+                    <td>Interpolated</td>
+                    <td>${data.x_interpolate}</td>
+                    <td>${data.y_interpolate}</td>
+                </tr>
+            </tbody>
+        </table>
+    `;
+    container.innerHTML = tableHTML;
+}
+
+document.getElementById('interpolationForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const numPoints = parseInt(document.getElementById('numPoints').value);
+    const x_points = [];
+    const y_points = [];
+    
+    for (let i = 0; i < numPoints; i++) {
+        x_points.push(parseFloat(document.getElementById(`x${i}`).value));
+        y_points.push(parseFloat(document.getElementById(`y${i}`).value));
+    }
+    
+    const values = {
+        method: document.getElementById('method').value,
+        x_points: x_points,
+        y_points: y_points,
+        x_interpolate: parseFloat(document.getElementById('xInterpolate').value)
+    };
+
+    try {
+        const response = await fetch('/api/interpolation', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(values),
+        });
+
+        const data = await response.json();
+        if (data.error) {
+            alert(data.error);
+            return;
+        }
+
+        document.getElementById('resultSection').classList.add('show');
+        document.getElementById('resultValue').innerHTML = `
+            <div class="interpolated-value">
+                f(${data.plot_data.x_interpolate}) = ${data.result.toFixed(6)}
+            </div>
+        `;
+        
+        createPlot(data.plot_data);
+        createPointsTable(data.plot_data);
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Terjadi kesalahan dalam perhitungan');
+    }
+});
+
+function clearAll() {
+    document.getElementById('method').value = 'linear';
+    document.getElementById('numPoints').value = '3';
+    document.getElementById('xInterpolate').value = '';
+    generatePointsInput();
+    
+    if (interpolationChart) {
+        interpolationChart.destroy();
+    }
+    
+    document.getElementById('resultSection').classList.remove('show');
+    document.getElementById('resultValue').innerHTML = '';
+    document.getElementById('pointsTable').innerHTML = '';
+}
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', generatePointsInput);
+</script>
+{% endblock %} 

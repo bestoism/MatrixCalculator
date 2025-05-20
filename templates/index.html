@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="menu">
+    <a href="{{ url_for('lu_decomposition') }}" class="menu-item">
+        <i class="fas fa-th"></i>
+        <span>1. LU Dekomposisi</span>
+    </a>
+    <a href="{{ url_for('matrix') }}" class="menu-item">
+        <i class="fas fa-table"></i>
+        <span>2. Matriks</span>
+    </a>
+    <a href="{{ url_for('matrix_inverse') }}" class="menu-item">
+        <i class="fas fa-sync-alt"></i>
+        <span>3. Invers Matriks</span>
+    </a>
+    <a href="{{ url_for('gauss_elimination') }}" class="menu-item">
+        <i class="fas fa-equals"></i>
+        <span>4. Eliminasi Gauss</span>
+    </a>
+    <a href="{{ url_for('iteration_method') }}" class="menu-item">
+        <i class="fas fa-redo"></i>
+        <span>5. Metode Iterasi</span>
+    </a>
+    <a href="{{ url_for('non_linear') }}" class="menu-item">
+        <i class="fas fa-wave-square"></i>
+        <span>6. Persamaan Non Linier</span>
+    </a>
+    <a href="{{ url_for('interpolation') }}" class="menu-item">
+        <i class="fas fa-chart-line"></i>
+        <span>7. Interpolasi</span>
+    </a>
+    <a href="{{ url_for('system_simulation') }}" class="menu-item">
+        <i class="fas fa-project-diagram"></i>
+        <span>8. Pemodelan dan Simulasi Sistem</span>
+    </a>
+    <a href="{{ url_for('monte_carlo') }}" class="menu-item">
+        <i class="fas fa-dice"></i>
+        <span>9. Monte Carlo</span>
+    </a>
+    <a href="{{ url_for('markov_chain') }}" class="menu-item">
+        <i class="fas fa-link"></i>
+        <span>10. Rantai Markov</span>
+    </a>
+</div>
+{% endblock %} 

@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}Persamaan Non-Linear - Kalkulator Matriks{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/non_linear.css') }}">
+{% endblock %}
+
+{% block header %}Persamaan Non-Linear{% endblock %}
+
+{% block content %}
+<div class="calculator-container">
+    <div class="input-section">
+        <h2>Masukkan Persamaan Non-Linear</h2>
+        <form id="nonLinearForm">
+            <div class="input-group">
+                <label for="equation">Persamaan f(x):</label>
+                <input type="text" id="equation" placeholder="Contoh: x**3 - 2*x - 5" required>
+            </div>
+            <div class="input-group">
+                <label for="initialGuess">Tebakan Awal (x0):</label>
+                <input type="number" id="initialGuess" step="any" value="1" required>
+            </div>
+            <div class="input-group">
+                <label for="maxIterations">Maksimum Iterasi:</label>
+                <input type="number" id="maxIterations" min="1" max="1000" value="50" required>
+            </div>
+            <div class="input-group">
+                <label for="tolerance">Toleransi Error:</label>
+                <input type="number" id="tolerance" min="0.0001" max="100" value="0.01" step="0.0001" required>
+            </div>
+            <button type="submit" class="btn btn-primary calculate-btn">
+                <i class="fas fa-calculator"></i> Hitung
+            </button>
+        </form>
+    </div>
+    <div class="result-section" id="resultSection" style="display: none;">
+        <h2>Hasil</h2>
+        <div id="equationDisplay"></div>
+        <div id="rootDisplay"></div>
+        <div id="verification"></div>
+        <div id="convergenceInfo"></div>
+        <div id="iterationsTable"></div>
+    </div>
+</div>
+<div class="action-buttons">
+    <a href="{{ url_for('home') }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Kembali ke Menu Utama
+    </a>
+    <button type="button" class="btn btn-danger" onclick="clearAll()">
+        <i class="fas fa-trash"></i> Bersihkan
+    </button>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function displayEquation(equation) {
+    document.getElementById('equationDisplay').innerHTML = `<b>f(x):</b> ${equation}`;
+}
+function displayRoot(root) {
+    document.getElementById('rootDisplay').innerHTML = `<b>Akar (root):</b> ${root}`;
+}
+function displayVerification(equation, root) {
+    document.getElementById('verification').innerHTML = `<b>Verifikasi:</b> f(${root}) = ${equation}`;
+}
+function displayConvergence(info) {
+    document.getElementById('convergenceInfo').innerHTML = info;
+}
+function displayIterationsTable(iterations) {
+    let html = '<table class="iteration-table"><thead><tr><th>Iterasi</th><th>x</th><th>f(x)</th><th>f\'(x)</th></tr></thead><tbody>';
+    iterations.forEach((item, idx) => {
+        html += `<tr><td>${item.iteration + 1}</td><td>${item.x.toFixed(6)}</td><td>${item.fx.toExponential(3)}</td><td>${item.dfx.toExponential(3)}</td></tr>`;
+    });
+    html += '</tbody></table>';
+    document.getElementById('iterationsTable').innerHTML = html;
+}
+document.getElementById('nonLinearForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const equation = document.getElementById('equation').value;
+    const initialGuess = document.getElementById('initialGuess').value;
+    const maxIterations = document.getElementById('maxIterations').value;
+    const tolerance = document.getElementById('tolerance').value;
+    try {
+        const response = await fetch('/api/non-linear', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ equation, initialGuess, maxIterations, tolerance })
+        });
+        const data = await response.json();
+        if (data.error) {
+            alert(data.error);
+            return;
+        }
+        document.getElementById('resultSection').style.display = 'block';
+        displayEquation(equation);
+        displayRoot(data.root);
+        displayVerification(data.error, data.root);
+        displayConvergence(data.converged ? 'Konvergen' : 'Tidak Konvergen');
+        displayIterationsTable(data.iterations);
+    } catch (error) {
+        alert('Terjadi kesalahan dalam perhitungan');
+    }
+});
+function clearAll() {
+    document.getElementById('equation').value = '';
+    document.getElementById('initialGuess').value = '1';
+    document.getElementById('maxIterations').value = '50';
+    document.getElementById('tolerance').value = '0.01';
+    document.getElementById('resultSection').style.display = 'none';
+    document.getElementById('equationDisplay').innerHTML = '';
+    document.getElementById('rootDisplay').innerHTML = '';
+    document.getElementById('verification').innerHTML = '';
+    document.getElementById('convergenceInfo').innerHTML = '';
+    document.getElementById('iterationsTable').innerHTML = '';
+}
+document.addEventListener('DOMContentLoaded', clearAll);
+</script>
+{% endblock %}

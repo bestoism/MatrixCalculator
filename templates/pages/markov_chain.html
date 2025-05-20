@@ -1,0 +1,299 @@
+{% extends "base.html" %}
+
+{% block title %}Rantai Markov - Kalkulator Matriks{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/markov_chain.css') }}">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block header %}Rantai Markov{% endblock %}
+
+{% block content %}
+<div class="calculator-container">
+    <div class="input-section">
+        <h2>Parameter Rantai Markov</h2>
+        <form id="markovChainForm">
+            <div class="matrix-input">
+                <div class="input-header">
+                    <h3>Matriks Transisi</h3>
+                    <div class="size-control">
+                        <label for="numStates">Jumlah State:</label>
+                        <input type="number" id="numStates" min="2" max="5" value="3" class="size-input">
+                        <button type="button" class="btn btn-secondary" onclick="generateInputs()">
+                            <i class="fas fa-table"></i> Generate Matrix
+                        </button>
+                    </div>
+                </div>
+                <div id="transitionMatrix" class="matrix-container">
+                    <!-- Matrix will be generated here -->
+                </div>
+            </div>
+
+            <div class="initial-state">
+                <h3>State Awal</h3>
+                <div id="initialStateInputs" class="state-inputs">
+                    <!-- Initial state inputs will be generated here -->
+                </div>
+            </div>
+
+            <div class="simulation-params">
+                <div class="param-group">
+                    <label for="numSteps">Jumlah Langkah:</label>
+                    <input type="number" id="numSteps" min="1" max="100" value="10" required>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary calculate-btn">
+                <i class="fas fa-calculator"></i> Hitung
+            </button>
+        </form>
+    </div>
+
+    <div class="result-section" id="resultSection">
+        <h2>Hasil Simulasi</h2>
+        <div class="result-container">
+            <!-- State Evolution Plot -->
+            <div class="plot-box">
+                <h3>Evolusi State</h3>
+                <div class="plot-container">
+                    <canvas id="stateEvolutionPlot"></canvas>
+                </div>
+            </div>
+
+            <!-- Steady State -->
+            <div class="steady-state-box">
+                <h3>Steady State (Keadaan Setimbang)</h3>
+                <div id="steadyState" class="steady-state-content"></div>
+            </div>
+
+            <!-- State Probabilities Table -->
+            <div class="probabilities-box">
+                <h3>Probabilitas State</h3>
+                <div id="probabilitiesTable" class="table-container"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="action-buttons">
+    <a href="{{ url_for('home') }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Kembali ke Menu Utama
+    </a>
+    <button type="button" class="btn btn-danger" onclick="clearAll()">
+        <i class="fas fa-trash"></i> Bersihkan
+    </button>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let stateEvolutionChart = null;
+
+function generateInputs() {
+    const numStates = parseInt(document.getElementById('numStates').value);
+    
+    // Generate transition matrix
+    const matrixContainer = document.getElementById('transitionMatrix');
+    matrixContainer.innerHTML = '';
+    
+    for (let i = 0; i < numStates; i++) {
+        const row = document.createElement('div');
+        row.className = 'matrix-row';
+        
+        for (let j = 0; j < numStates; j++) {
+            const input = document.createElement('input');
+            input.type = 'number';
+            input.step = '0.01';
+            input.min = '0';
+            input.max = '1';
+            input.required = true;
+            input.id = `p${i}${j}`;
+            input.className = 'matrix-cell';
+            input.value = i === j ? '0.5' : (1/(numStates-1)*0.5).toFixed(2);
+            row.appendChild(input);
+        }
+        
+        matrixContainer.appendChild(row);
+    }
+    
+    // Generate initial state inputs
+    const initialStateContainer = document.getElementById('initialStateInputs');
+    initialStateContainer.innerHTML = '';
+    
+    for (let i = 0; i < numStates; i++) {
+        const input = document.createElement('div');
+        input.className = 'state-input';
+        input.innerHTML = `
+            <label>State ${i+1}:</label>
+            <input type="number" id="s${i}" step="0.01" min="0" max="1" 
+                   value="${i === 0 ? '1' : '0'}" required>
+        `;
+        initialStateContainer.appendChild(input);
+    }
+}
+
+function createPlot(data) {
+    if (stateEvolutionChart) {
+        stateEvolutionChart.destroy();
+    }
+    
+    const ctx = document.getElementById('stateEvolutionPlot').getContext('2d');
+    const datasets = data.stateLabels.map((label, i) => ({
+        label: label,
+        data: data.states.map(state => state[i]),
+        borderColor: getColor(i),
+        backgroundColor: getColor(i, 0.1),
+        fill: true
+    }));
+    
+    stateEvolutionChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: Array.from({length: data.numSteps + 1}, (_, i) => i),
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Langkah'
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Probabilitas'
+                    },
+                    min: 0,
+                    max: 1
+                }
+            }
+        }
+    });
+}
+
+function getColor(index, alpha = 1) {
+    const colors = [
+        `rgba(52, 152, 219, ${alpha})`,  // Blue
+        `rgba(231, 76, 60, ${alpha})`,   // Red
+        `rgba(46, 204, 113, ${alpha})`,  // Green
+        `rgba(155, 89, 182, ${alpha})`,  // Purple
+        `rgba(241, 196, 15, ${alpha})`   // Yellow
+    ];
+    return colors[index % colors.length];
+}
+
+function createProbabilitiesTable(data) {
+    const container = document.getElementById('probabilitiesTable');
+    let tableHTML = `
+        <table>
+            <thead>
+                <tr>
+                    <th>Langkah</th>
+                    ${data.stateLabels.map(label => `<th>${label}</th>`).join('')}
+                </tr>
+            </thead>
+            <tbody>
+    `;
+    
+    data.states.forEach((state, step) => {
+        tableHTML += `
+            <tr>
+                <td>${step}</td>
+                ${state.map(prob => `<td>${prob.toFixed(4)}</td>`).join('')}
+            </tr>
+        `;
+    });
+    
+    tableHTML += '</tbody></table>';
+    container.innerHTML = tableHTML;
+}
+
+function displaySteadyState(data) {
+    const container = document.getElementById('steadyState');
+    container.innerHTML = `
+        <div class="steady-state-grid">
+            ${data.steadyState.map((prob, i) => `
+                <div class="steady-state-item">
+                    <div class="state-label">${data.stateLabels[i]}</div>
+                    <div class="state-value">${prob.toFixed(4)}</div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+document.getElementById('markovChainForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const numStates = parseInt(document.getElementById('numStates').value);
+    const transitionMatrix = [];
+    const initialState = [];
+    
+    // Get transition matrix
+    for (let i = 0; i < numStates; i++) {
+        const row = [];
+        for (let j = 0; j < numStates; j++) {
+            row.push(parseFloat(document.getElementById(`p${i}${j}`).value));
+        }
+        transitionMatrix.push(row);
+    }
+    
+    // Get initial state
+    for (let i = 0; i < numStates; i++) {
+        initialState.push(parseFloat(document.getElementById(`s${i}`).value));
+    }
+    
+    const values = {
+        transitionMatrix: transitionMatrix,
+        initialState: initialState,
+        numSteps: parseInt(document.getElementById('numSteps').value)
+    };
+
+    try {
+        const response = await fetch('/api/markov-chain', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(values),
+        });
+
+        const data = await response.json();
+        if (data.error) {
+            alert(data.error);
+            return;
+        }
+
+        document.getElementById('resultSection').classList.add('show');
+        createPlot(data);
+        createProbabilitiesTable(data);
+        displaySteadyState(data);
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Terjadi kesalahan dalam perhitungan');
+    }
+});
+
+function clearAll() {
+    document.getElementById('numStates').value = '3';
+    document.getElementById('numSteps').value = '10';
+    generateInputs();
+    
+    if (stateEvolutionChart) {
+        stateEvolutionChart.destroy();
+    }
+    
+    document.getElementById('resultSection').classList.remove('show');
+    document.getElementById('steadyState').innerHTML = '';
+    document.getElementById('probabilitiesTable').innerHTML = '';
+}
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', generateInputs);
+</script>
+{% endblock %} 

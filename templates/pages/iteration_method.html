@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+
+{% block title %}Metode Iterasi - Kalkulator Matriks{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/iteration_method.css') }}">
+{% endblock %}
+
+{% block header %}Metode Iterasi (Gauss-Seidel){% endblock %}
+
+{% block content %}
+<div class="calculator-container">
+    <div class="input-section">
+        <h2>Masukkan Sistem Persamaan Linear</h2>
+        <form id="iterationForm">
+            <div class="matrix-size-input">
+                <div class="size-group">
+                    <label for="matrixSize">Ukuran Matriks:</label>
+                    <input type="number" id="matrixSize" min="2" max="10" value="3" class="size-input">
+                    <button type="button" class="btn btn-secondary" onclick="generateInputs()">
+                        <i class="fas fa-table"></i> Buat Matriks
+                    </button>
+                </div>
+                <div class="iteration-params">
+                    <div class="param-group">
+                        <label for="maxIterations">Maksimum Iterasi:</label>
+                        <input type="number" id="maxIterations" min="1" max="1000" value="50" class="param-input">
+                    </div>
+                    <div class="param-group">
+                        <label for="tolerance">Toleransi Error (%):</label>
+                        <input type="number" id="tolerance" min="0.0001" max="100" value="0.01" step="0.0001" class="param-input">
+                    </div>
+                </div>
+            </div>
+            <div class="system-input">
+                <div class="coefficient-matrix">
+                    <h3>Matriks Koefisien</h3>
+                    <div id="matrixInput" class="matrix-input"></div>
+                </div>
+                <div class="constants-vector">
+                    <h3>Vektor Konstanta</h3>
+                    <div id="constantsInput" class="constants-input"></div>
+                </div>
+                <div class="initial-guess">
+                    <h3>Tebakan Awal</h3>
+                    <div id="initialInput" class="initial-input"></div>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary calculate-btn">
+                <i class="fas fa-calculator"></i> Hitung
+            </button>
+        </form>
+    </div>
+    <div class="result-section" id="resultSection" style="display: none;">
+        <h2>Hasil Iterasi</h2>
+        <div id="iterationResults">
+        </div>
+        <div class="final-solution" id="finalSolution">
+        </div>
+    </div>
+</div>
+<div class="action-buttons">
+    <a href="{{ url_for('home') }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Kembali ke Menu Utama
+    </a>
+    <button type="button" class="btn btn-danger" onclick="clearAll()">
+        <i class="fas fa-trash"></i> Bersihkan
+    </button>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function generateInputs() {
+    const size = parseInt(document.getElementById('matrixSize').value);
+    const matrixInput = document.getElementById('matrixInput');
+    matrixInput.innerHTML = '';
+    for (let i = 0; i < size; i++) {
+        const row = document.createElement('div');
+        row.className = 'matrix-row';
+        for (let j = 0; j < size; j++) {
+            const input = document.createElement('input');
+            input.type = 'number';
+            input.className = 'matrix-cell';
+            input.step = 'any';
+            input.required = true;
+            input.id = `cell_${i}_${j}`;
+            input.placeholder = '0';
+            row.appendChild(input);
+        }
+        matrixInput.appendChild(row);
+    }
+    const constantsInput = document.getElementById('constantsInput');
+    constantsInput.innerHTML = '';
+    for (let i = 0; i < size; i++) {
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.className = 'constant-cell';
+        input.step = 'any';
+        input.required = true;
+        input.id = `constant_${i}`;
+        input.placeholder = '0';
+        constantsInput.appendChild(input);
+    }
+    const initialInput = document.getElementById('initialInput');
+    initialInput.innerHTML = '';
+    for (let i = 0; i < size; i++) {
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.className = 'initial-cell';
+        input.step = 'any';
+        input.required = true;
+        input.id = `initial_${i}`;
+        input.placeholder = '0';
+        input.value = '0';
+        initialInput.appendChild(input);
+    }
+}
+function getInputValues() {
+    const size = parseInt(document.getElementById('matrixSize').value);
+    const matrix = [];
+    const constants = [];
+    const initial = [];
+    for (let i = 0; i < size; i++) {
+        const row = [];
+        for (let j = 0; j < size; j++) {
+            const value = document.getElementById(`cell_${i}_${j}`).value;
+            row.push(value ? parseFloat(value) : 0);
+        }
+        matrix.push(row);
+    }
+    for (let i = 0; i < size; i++) {
+        const value = document.getElementById(`constant_${i}`).value;
+        constants.push(value ? parseFloat(value) : 0);
+    }
+    for (let i = 0; i < size; i++) {
+        const value = document.getElementById(`initial_${i}`).value;
+        initial.push(value ? parseFloat(value) : 0);
+    }
+    return {
+        matrix,
+        constants,
+        initial,
+        maxIterations: parseInt(document.getElementById('maxIterations').value),
+        tolerance: parseFloat(document.getElementById('tolerance').value)
+    };
+}
+function displayResults(data) {
+    const resultSection = document.getElementById('resultSection');
+    const iterationResults = document.getElementById('iterationResults');
+    let tableHTML = `
+        <div class="iteration-process">
+            <h3>Proses Iterasi</h3>
+            <div class="iteration-table-container">
+                <table class="iteration-table">
+                    <thead>
+                        <tr>
+                            <th>Iterasi</th>
+                            ${data.solution.map((_, i) => `<th>x${i + 1}</th>`).join('')}
+                            <th>Error (%)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+    `;
+    data.iterations.forEach((iteration, index) => {
+        tableHTML += `
+            <tr>
+                <td>${index + 1}</td>
+                ${iteration.map(val => `<td>${parseFloat(val).toFixed(6)}</td>`).join('')}
+                <td>${index < data.errors.length ? data.errors[index].toFixed(6) : '-'}</td>
+            </tr>
+        `;
+    });
+    tableHTML += `</tbody></table></div>`;
+    let finalResultHTML = `
+        <div class="final-result">
+            <h3>Hasil Akhir</h3>
+            <div class="solution-grid">
+                ${data.solution.map((val, i) => `
+                    <div class="solution-item">
+                        <div class="solution-label">x${i + 1} = </div>
+                        <div class="solution-value">${parseFloat(val).toFixed(6)}</div>
+                    </div>
+                `).join('')}
+            </div>
+            <div class="iteration-info">
+                <div class="info-item">
+                    <span class="info-label">Jumlah Iterasi:</span>
+                    <span class="info-value">${data.iterationCount}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Error:</span>
+                    <span class="info-value">${parseFloat(data.error).toFixed(6)}%</span>
+                </div>
+                <div class="convergence-status ${data.converged ? 'success' : 'error'}">
+                    ${data.converged ? 'Konvergen' : 'Tidak Konvergen'}
+                </div>
+            </div>
+        </div>
+    `;
+    iterationResults.innerHTML = finalResultHTML + tableHTML;
+    resultSection.style.display = 'block';
+    resultSection.scrollIntoView({ behavior: 'smooth' });
+}
+document.getElementById('iterationForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const values = getInputValues();
+    try {
+        const response = await fetch('/api/iteration-method', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(values),
+        });
+        const data = await response.json();
+        if (data.error) {
+            alert(data.error);
+            return;
+        }
+        document.getElementById('resultSection').classList.add('show');
+        displayResults(data);
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Terjadi kesalahan dalam perhitungan');
+    }
+});
+function clearAll() {
+    document.getElementById('matrixSize').value = '3';
+    document.getElementById('maxIterations').value = '50';
+    document.getElementById('tolerance').value = '0.01';
+    generateInputs();
+    document.getElementById('resultSection').classList.remove('show');
+    document.getElementById('convergenceInfo').innerHTML = '';
+    document.getElementById('iterationsTable').innerHTML = '';
+    document.getElementById('finalSolution').innerHTML = '';
+}
+document.addEventListener('DOMContentLoaded', generateInputs);
+</script>
+{% endblock %}

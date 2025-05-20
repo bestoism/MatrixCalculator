@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+
+{% block title %}Simulasi Monte Carlo - Kalkulator Matriks{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/monte_carlo.css') }}">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block header %}Simulasi Monte Carlo{% endblock %}
+
+{% block content %}
+<div class="calculator-container">
+    <div class="input-section">
+        <h2>Parameter Simulasi</h2>
+        <form id="monteCarloForm">
+            <div class="equation-input">
+                <div class="input-group">
+                    <label for="equation">f(x) =</label>
+                    <input type="text" id="equation" required placeholder="Contoh: x**2" class="equation-field">
+                </div>
+                <div class="equation-help">
+                    <h4>Panduan Input:</h4>
+                    <ul>
+                        <li>Gunakan x sebagai variabel</li>
+                        <li>** untuk pangkat (contoh: x**2)</li>
+                        <li>* untuk perkalian</li>
+                        <li>Fungsi: sin(x), cos(x), exp(x), log(x)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="parameters">
+                <div class="param-group">
+                    <label for="xMin">Batas Bawah (x min):</label>
+                    <input type="number" id="xMin" step="any" value="0" required>
+                </div>
+                <div class="param-group">
+                    <label for="xMax">Batas Atas (x max):</label>
+                    <input type="number" id="xMax" step="any" value="1" required>
+                </div>
+                <div class="param-group">
+                    <label for="numPoints">Jumlah Titik:</label>
+                    <input type="number" id="numPoints" min="100" max="10000" value="1000" required>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary calculate-btn">
+                <i class="fas fa-calculator"></i> Hitung Area
+            </button>
+        </form>
+    </div>
+
+    <div class="result-section" id="resultSection">
+        <h2>Hasil Simulasi</h2>
+        <div class="result-container">
+            <!-- Result value -->
+            <div class="result-box">
+                <div class="result-content">
+                    <h3>Hasil Perhitungan</h3>
+                    <div class="result-value" id="resultValue"></div>
+                    <div class="points-info" id="pointsInfo"></div>
+                </div>
+            </div>
+
+            <!-- Plot -->
+            <div class="plot-box">
+                <h3>Visualisasi Monte Carlo</h3>
+                <div class="plot-container">
+                    <canvas id="monteCarloPlot"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="action-buttons">
+    <a href="{{ url_for('home') }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Kembali ke Menu Utama
+    </a>
+    <button type="button" class="btn btn-danger" onclick="clearAll()">
+        <i class="fas fa-trash"></i> Bersihkan
+    </button>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let monteCarloChart = null;
+
+function createPlot(data) {
+    if (monteCarloChart) {
+        monteCarloChart.destroy();
+    }
+    
+    const ctx = document.getElementById('monteCarloPlot').getContext('2d');
+    monteCarloChart = new Chart(ctx, {
+        type: 'scatter',
+        data: {
+            datasets: [{
+                label: 'Area Positif',
+                data: data.points.underPositive,
+                backgroundColor: 'rgba(46, 204, 113, 0.5)',
+                pointRadius: 3
+            }, {
+                label: 'Di Luar Area (Positif)',
+                data: data.points.overPositive,
+                backgroundColor: 'rgba(231, 76, 60, 0.5)',
+                pointRadius: 3
+            }, {
+                label: 'Area Negatif',
+                data: data.points.underNegative,
+                backgroundColor: 'rgba(52, 152, 219, 0.5)',
+                pointRadius: 3
+            }, {
+                label: 'Di Luar Area (Negatif)',
+                data: data.points.overNegative,
+                backgroundColor: 'rgba(241, 196, 15, 0.5)',
+                pointRadius: 3
+            }, {
+                label: 'Kurva f(x)',
+                data: data.xPlot.map((x, i) => ({x: x, y: data.yPlot[i]})),
+                type: 'line',
+                borderColor: '#2c3e50',
+                borderWidth: 2,
+                fill: false,
+                pointRadius: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                    type: 'linear',
+                    position: 'bottom',
+                    title: {
+                        display: true,
+                        text: 'x'
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'y'
+                    },
+                    min: data.yRange.min,
+                    max: data.yRange.max
+                }
+            }
+        }
+    });
+}
+
+document.getElementById('monteCarloForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const values = {
+        equation: document.getElementById('equation').value,
+        xMin: document.getElementById('xMin').value,
+        xMax: document.getElementById('xMax').value,
+        numPoints: document.getElementById('numPoints').value
+    };
+
+    try {
+        const response = await fetch('/api/monte-carlo', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(values),
+        });
+
+        const data = await response.json();
+        if (data.error) {
+            alert(data.error);
+            return;
+        }
+
+        document.getElementById('resultSection').classList.add('show');
+        document.getElementById('resultValue').innerHTML = `
+            <div class="area-value">
+                <div class="estimated-area">
+                    Area (Monte Carlo) ≈ ${data.estimated_area.toFixed(6)}
+                </div>
+                <div class="exact-area">
+                    Area (Eksak) = ${data.exact_area.toFixed(6)}
+                </div>
+                <div class="error-percentage">
+                    Error = ${data.error_percentage.toFixed(4)}%
+                </div>
+            </div>
+        `;
+        
+        document.getElementById('pointsInfo').innerHTML = `
+            <div class="points-stats">
+                <p>Titik di Bawah Kurva: ${data.pointsUnder}</p>
+                <p>Total Titik: ${data.totalPoints}</p>
+                <p>Rasio: ${data.ratio.toFixed(4)}</p>
+            </div>
+        `;
+        
+        createPlot(data.plotData);
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Terjadi kesalahan dalam perhitungan');
+    }
+});
+
+function clearAll() {
+    document.getElementById('equation').value = '';
+    document.getElementById('xMin').value = '0';
+    document.getElementById('xMax').value = '1';
+    document.getElementById('numPoints').value = '1000';
+    
+    if (monteCarloChart) {
+        monteCarloChart.destroy();
+    }
+    
+    document.getElementById('resultSection').classList.remove('show');
+    document.getElementById('resultValue').innerHTML = '';
+    document.getElementById('pointsInfo').innerHTML = '';
+}
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', () => {
+    // Any initialization if needed
+});
+</script>
+{% endblock %} 

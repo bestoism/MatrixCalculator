@@ -1,0 +1,258 @@
+{% extends "base.html" %}
+
+{% block title %}Operasi Matriks - Kalkulator Matriks{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/matrix.css') }}">
+{% endblock %}
+
+{% block header %}Operasi Matriks{% endblock %}
+
+{% block content %}
+<div class="calculator-container">
+    <div class="input-section">
+        <h2>Masukkan Matriks</h2>
+        <div class="operation-selection">
+            <label for="operation">Pilih Operasi:</label>
+            <select id="operation" class="operation-select">
+                <option value="add">Penjumlahan (+)</option>
+                <option value="subtract">Pengurangan (-)</option>
+                <option value="multiply">Perkalian (×)</option>
+                <option value="transpose">Transpose (T)</option>
+            </select>
+        </div>
+        <div class="matrix-section">
+            <h3>Matriks A</h3>
+            <div class="matrix-size">
+                <div class="size-input">
+                    <label for="rowsA">Baris:</label>
+                    <input type="number" id="rowsA" min="1" max="5" value="3">
+                </div>
+                <div class="size-input">
+                    <label for="colsA">Kolom:</label>
+                    <input type="number" id="colsA" min="1" max="5" value="3">
+                </div>
+                <button type="button" onclick="generateMatrixA()" class="btn btn-secondary">
+                    Buat Matriks A
+                </button>
+            </div>
+            <div id="matrixA" class="matrix-input"></div>
+        </div>
+        <div id="operatorSymbol" class="operator">+</div>
+        <div class="matrix-section" id="matrixBSection">
+            <h3>Matriks B</h3>
+            <div class="matrix-size">
+                <div class="size-input">
+                    <label for="rowsB">Baris:</label>
+                    <input type="number" id="rowsB" min="1" max="5" value="3">
+                </div>
+                <div class="size-input">
+                    <label for="colsB">Kolom:</label>
+                    <input type="number" id="colsB" min="1" max="5" value="3">
+                </div>
+                <button type="button" onclick="generateMatrixB()" class="btn btn-secondary">
+                    Buat Matriks B
+                </button>
+            </div>
+            <div id="matrixB" class="matrix-input"></div>
+        </div>
+        <button type="button" onclick="calculate()" class="btn btn-primary calculate-btn">
+            Hitung
+        </button>
+    </div>
+    <div id="resultSection" class="result-section" style="display: none;">
+        <h3>Hasil</h3>
+        <div id="resultMatrix" class="matrix-result"></div>
+    </div>
+</div>
+<div class="action-buttons">
+    <a href="{{ url_for('home') }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Kembali ke Menu Utama
+    </a>
+    <button type="button" onclick="clearAll()" class="btn btn-danger">
+        <i class="fas fa-trash"></i> Bersihkan
+    </button>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function handleMatrixInput(event, currentId) {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        const [matrixId, row, col] = currentId.split('_');
+        const numRows = parseInt(document.getElementById(`rows${matrixId.slice(-1)}`).value);
+        const numCols = parseInt(document.getElementById(`cols${matrixId.slice(-1)}`).value);
+        let nextRow = parseInt(row);
+        let nextCol = parseInt(col) + 1;
+        if (nextCol >= numCols) {
+            nextCol = 0;
+            nextRow++;
+        }
+        if (nextRow < numRows) {
+            const nextInput = document.getElementById(`${matrixId}_${nextRow}_${nextCol}`);
+            if (nextInput) {
+                nextInput.focus();
+                return;
+            }
+        }
+        if (matrixId === 'matrixA' && document.getElementById('matrixBSection').style.display !== 'none') {
+            const nextInput = document.getElementById('matrixB_0_0');
+            if (nextInput) {
+                nextInput.focus();
+                return;
+            }
+        }
+        if ((matrixId === 'matrixB' && nextRow >= numRows) || 
+            (matrixId === 'matrixA' && document.getElementById('matrixBSection').style.display === 'none')) {
+            calculate();
+        }
+    }
+}
+function generateMatrix(rows, cols, containerId) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
+    const table = document.createElement('table');
+    for (let i = 0; i < rows; i++) {
+        const row = document.createElement('tr');
+        for (let j = 0; j < cols; j++) {
+            const cell = document.createElement('td');
+            const input = document.createElement('input');
+            input.type = 'number';
+            input.id = `${containerId}_${i}_${j}`;
+            input.value = '0';
+            let isFirstFocus = true;
+            input.addEventListener('focus', function() {
+                if (isFirstFocus && this.value === '0') {
+                    this.value = '';
+                    isFirstFocus = false;
+                }
+            });
+            input.addEventListener('blur', function() {
+                if (this.value === '') {
+                    this.value = '0';
+                    isFirstFocus = true;
+                }
+            });
+            input.addEventListener('keypress', (e) => handleMatrixInput(e, input.id));
+            cell.appendChild(input);
+            row.appendChild(cell);
+        }
+        table.appendChild(row);
+    }
+    container.appendChild(table);
+}
+function generateMatrixA() {
+    const rows = parseInt(document.getElementById('rowsA').value);
+    const cols = parseInt(document.getElementById('colsA').value);
+    generateMatrix(rows, cols, 'matrixA');
+}
+function generateMatrixB() {
+    const rows = parseInt(document.getElementById('rowsB').value);
+    const cols = parseInt(document.getElementById('colsB').value);
+    generateMatrix(rows, cols, 'matrixB');
+}
+function getMatrixValues(matrixId, rows, cols) {
+    const matrix = [];
+    for (let i = 0; i < rows; i++) {
+        const row = [];
+        for (let j = 0; j < cols; j++) {
+            const value = document.getElementById(`${matrixId}_${i}_${j}`).value;
+            row.push(parseFloat(value) || 0);
+        }
+        matrix.push(row);
+    }
+    return matrix;
+}
+function updateOperation() {
+    const operation = document.getElementById('operation').value;
+    const matrixBSection = document.getElementById('matrixBSection');
+    const operatorSymbol = document.getElementById('operatorSymbol');
+    if (operation === 'transpose') {
+        matrixBSection.style.display = 'none';
+        operatorSymbol.style.display = 'none';
+    } else {
+        matrixBSection.style.display = 'block';
+        operatorSymbol.style.display = 'block';
+        operatorSymbol.textContent = operation === 'add' ? '+' : 
+                                   operation === 'subtract' ? '-' : '×';
+    }
+}
+async function calculate() {
+    const operation = document.getElementById('operation').value;
+    const rowsA = parseInt(document.getElementById('rowsA').value);
+    const colsA = parseInt(document.getElementById('colsA').value);
+    const matrixA = getMatrixValues('matrixA', rowsA, colsA);
+    let data = {
+        operation: operation,
+        matrixA: matrixA
+    };
+    if (operation !== 'transpose') {
+        const rowsB = parseInt(document.getElementById('rowsB').value);
+        const colsB = parseInt(document.getElementById('colsB').value);
+        if ((operation === 'add' || operation === 'subtract') && 
+            (rowsA !== rowsB || colsA !== colsB)) {
+            alert('Untuk penjumlahan/pengurangan, ukuran kedua matriks harus sama!');
+            return;
+        }
+        if (operation === 'multiply' && colsA !== rowsB) {
+            alert('Untuk perkalian, jumlah kolom matriks A harus sama dengan jumlah baris matriks B!');
+            return;
+        }
+        const matrixB = getMatrixValues('matrixB', rowsB, colsB);
+        data.matrixB = matrixB;
+    }
+    try {
+        const response = await fetch('/api/matrix-operation', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+        const result = await response.json();
+        if (result.error) {
+            alert(result.error);
+            return;
+        }
+        displayResult(result.result);
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Terjadi kesalahan dalam perhitungan');
+    }
+}
+function displayResult(matrix) {
+    const resultContainer = document.getElementById('resultMatrix');
+    resultContainer.innerHTML = '';
+    const table = document.createElement('table');
+    for (let i = 0; i < matrix.length; i++) {
+        const row = document.createElement('tr');
+        for (let j = 0; j < matrix[i].length; j++) {
+            const cell = document.createElement('td');
+            cell.textContent = matrix[i][j].toFixed(2);
+            row.appendChild(cell);
+        }
+        table.appendChild(row);
+    }
+    resultContainer.appendChild(table);
+    document.getElementById('resultSection').style.display = 'block';
+}
+function clearAll() {
+    document.getElementById('operation').value = 'add';
+    document.getElementById('rowsA').value = '3';
+    document.getElementById('colsA').value = '3';
+    document.getElementById('rowsB').value = '3';
+    document.getElementById('colsB').value = '3';
+    generateMatrixA();
+    generateMatrixB();
+    updateOperation();
+    document.getElementById('resultSection').style.display = 'none';
+}
+document.getElementById('operation').addEventListener('change', updateOperation);
+document.addEventListener('DOMContentLoaded', function() {
+    generateMatrixA();
+    generateMatrixB();
+    updateOperation();
+});
+</script>
+{% endblock %}

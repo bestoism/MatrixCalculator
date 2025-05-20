@@ -1,0 +1,201 @@
+.calculator-container {
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+}
+
+.input-section {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 25px;
+    margin-bottom: 25px;
+}
+
+/* Styling untuk dropdown operasi */
+.operation-selection {
+    margin-bottom: 25px;
+}
+
+.operation-select {
+    width: 200px;
+    padding: 10px 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 1em;
+    color: #2c3e50;
+    background: white;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.operation-select:focus {
+    border-color: #3498db;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(52,152,219,0.2);
+}
+
+/* Styling untuk section matriks */
+.matrix-section {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 25px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.matrix-size {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.size-input {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.size-input input {
+    width: 60px;
+    padding: 8px 12px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 1em;
+}
+
+.matrix-input table {
+    border-collapse: separate;
+    border-spacing: 5px;
+}
+
+.matrix-input input {
+    width: 60px;
+    padding: 8px 12px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 1em;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.matrix-input input:focus {
+    border-color: #3498db;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(52,152,219,0.2);
+}
+
+/* Styling untuk operator */
+.operator {
+    font-size: 2em;
+    color: #2c3e50;
+    text-align: center;
+    margin: 20px 0;
+    font-weight: bold;
+}
+
+/* Styling untuk tombol */
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    color: white;
+}
+
+.btn-secondary {
+    background: #f8f9fa;
+    border: 2px solid #e0e0e0;
+    color: #2c3e50;
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    color: white;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.calculate-btn {
+    margin: 20px auto;
+    display: block;
+    padding: 12px 30px;
+    font-size: 1.1em;
+}
+
+/* Styling untuk hasil */
+.result-section {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 25px;
+    margin-top: 30px;
+}
+
+.matrix-result table {
+    margin: 0 auto;
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.matrix-result td {
+    padding: 10px 15px;
+    text-align: center;
+    font-family: 'Courier New', monospace;
+    font-size: 1.1em;
+    color: #2c3e50;
+    border: 1px solid #e0e0e0;
+}
+
+/* Action buttons */
+.action-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 30px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .calculator-container {
+        padding: 20px;
+    }
+
+    .matrix-size {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .size-input {
+        width: 100%;
+    }
+
+    .matrix-input input {
+        width: 50px;
+        padding: 6px 8px;
+    }
+
+    .action-buttons {
+        flex-direction: column;
+    }
+
+    .btn {
+        width: 100%;
+        justify-content: center;
+    }
+} 
